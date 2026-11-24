@@ -1,6 +1,26 @@
 #pragma once
-#include "../shared/Types.hpp"
+#include <cstddef>
+#include "Operation.hpp"
 #include "../shared/RingQueue.hpp"
-namespace papertrail { struct Commit { CommitID id{}; Commit* parent1{}; Commit* parent2{}; Tick tick{}; std::size_t depth{}; std::size_t references{}; }; class CommitDAG { public: /** Constructs an empty commit registry. */ CommitDAG(); /** Releases commits after reference accounting. */ ~CommitDAG(); /** Creates a depth-zero root commit. */ Commit* createRoot(Tick tick); /** Creates a normal commit. */ Commit* createCommit(Commit* parent,const RingQueue<Operation>& operations,Tick tick); /** Creates a two-parent merge commit. */ Commit* createMergeCommit(Commit* first,Commit* second,const RingQueue<Operation>& operations,Tick tick); /** Looks up a commit without transferring ownership. */ Commit* lookup(CommitID id) const; /** Acquires a document-head reference. */ void acquireHead(Commit* commit); /** Releases a document-head reference and cascades safely. */ void releaseHead(Commit* commit); /** Finds a common ancestor using both parent links. */ CommonAncestorResult commonAncestor(const Commit* first,const Commit* second) const; /** Validates DAG acyclicity, depths and references. */ DiagnosticResult validate() const; private: void* implementation_{}; };
+#include "../shared/HashMap.hpp"
+#include "../search/BloomFilter.hpp"
+#include "../shared/Results.hpp"
+namespace papertrail {
+struct Commit { CommitID id{}; Commit* parent1{}; Commit* parent2{}; Tick tick{}; std::size_t depth{}; RingQueue<Operation> operations; BloomFilter bloom; std::size_t references{}; };
+class CommitDAG {
+public:
+    CommitDAG(); ~CommitDAG();
+    Commit* prepareRootCommit(Tick tick);
+    Commit* prepareNormalCommit(Commit* parent,const RingQueue<Operation>& operations,Tick tick);
+    Commit* prepareMergeCommit(Commit* firstParent,Commit* secondParent,const RingQueue<Operation>& operations,Tick tick);
+    StatusCode registerPreparedCommit(Commit* prepared);
+    void discardPreparedCommit(Commit* prepared) noexcept;
+    Commit* lookup(CommitID id) const;
+    void acquireHead(Commit* commit); void releaseHead(Commit* commit);
+    bool isAncestor(const Commit* ancestor,const Commit* descendant) const;
+    CommonAncestorResult commonAncestor(const Commit* first,const Commit* second) const;
+    DiagnosticResult validate() const;
+private:
+    HashMap<CommitID,Commit*> commits_;
+};
 }
-using namespace papertrail;

@@ -40,3 +40,31 @@ Save publishes staged text, commit state, Bloom filters, indexes, and graphs ato
 ## Limits and unresolved choices
 
 Implementations enforce at most 50 documents including forks and binned documents, 5,000 lines per document, 200 characters per line, 1–16 ASCII-alphanumeric author names, and 1–32 character file or folder names. Result arrays are caller-owned unless an implementation documents a transfer. Exact user-facing error strings remain a CommandShell responsibility.
+
+## Final frozen signatures and ownership
+
+All public declarations use the `papertrail` namespace. No header imports a namespace into global scope. `Types.hpp` contains only shared aliases, enums, and value records. `Results.hpp` contains every returned result and owns collections through `DynamicArray<T>`. A returned result owns its strings and arrays for its lifetime.
+
+IDs are globally monotonic in their own spaces. `LineID` zero is the insertion anchor for the beginning of a document. File, folder, bin, line, and commit IDs are never reused. Limits remain 50 documents including forks and binned documents, 5,000 lines, 200 characters per line, validated names, and validated authors.
+
+`Operation` owns all historical text and author strings by value. It stores IDs and no positions or AVL pointers. `Commit` owns its immutable published operation queue and Bloom filter. `CommitDAG` owns the registry and uses `HashMap<CommitID, Commit*>`. Preparation produces detached commits. Registration transfers registry ownership and establishes parent references. Document heads add references. Release recursively frees unreachable commits after all child and head references are gone.
+
+`VersionControl` is the sole owner of per-document `VersionState`, including HEAD and staging. Documents contain working text only. Its private mapping is `HashMap<FileID, VersionState*>`, alongside the commit DAG, monotonic LineID counter, Workspace pointer, and ContentServices pointer. Switching, closing, binning, and restoring do not discard version state. Save, discard, fork, and merge use the mandatory caller-provided tick.
+
+`insertLine` accepts a one-based destination position. Position 1 inserts before the current first line, position N+1 appends, and VersionControl translates the position to an anchor LineID before constructing an operation.
+
+## Transaction boundaries
+
+`ContentServices::prepareSavedChanges` receives the candidate saved AVL and committed operation sequence, prepares all postings, Bloom-derived data, link records, and embed validation, and returns an opaque `PreparedContentUpdate`. Preparation may allocate but cannot publish. `publishPrepared` is non-allocating and no-failure. `cancelPrepared` destroys detached state. Both clear the caller pointer. Lifecycle preparation covers every affected document in a folder subtree. Binning changes visibility, restore re-enables it, and permanent deletion purges saved references.
+
+MergeEngine prepares a candidate AVL and applied operation queue. VersionControl owns final ContentServices publication, commit registration, HEAD advancement, and tick assignment. Abort or failed validation leaves target text, staging, HEAD, indexes, graphs, and references unchanged.
+
+## Construction and destruction order
+
+Construct VersionControl first. Construct Workspace with its VersionControl reference. Construct ContentServices with its Workspace reference. Bind ContentServices into Workspace. Bind Workspace and ContentServices into VersionControl. Construct InvariantChecker with the three services. Construct Fuzzer. Construct CommandShell with Workspace, VersionControl, ContentServices, InvariantChecker, and Fuzzer. On shutdown, stop CommandShell, release document heads and VersionStates through VersionControl, destroy ContentServices and Workspace-owned documents, then destroy Workspace and finally VersionControl so CommitDAG is destroyed last among version objects.
+
+## Public method inventory
+
+Shared structures provide manually managed copy/move/destruction, indexed queue access, separate-chaining maps, stable sorting, bounded heaps, Bloom ownership, memory diagnostics, and deterministic invariant/fuzzer entry points. Workspace owns Documents and FolderTree nodes. OrderStatisticAVL owns line nodes and its LineID map. VersionControl owns staging and history. Search owns B+ postings, tokenization, blocklist, similarity, and experiments. LinkGraph and EmbedGraph are saved-text services owned behind ContentServices. CommandShell is the only terminal formatting and conflict-input layer and implements ConflictResolver.
+
+All declaration comments describe the caller, parameters, result, mutation and failure guarantee. Implementations must keep those contracts without adding alternate facades, STL containers, smart pointers, global clocks, or executable logic to these headers.

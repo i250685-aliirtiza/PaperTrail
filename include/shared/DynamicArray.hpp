@@ -22,4 +22,5 @@ template<class T> class DynamicArray { public:
 /** Exchanges complete ownership with another array. */ void swapWith(DynamicArray& other) noexcept;
 private: T* data_{}; std::size_t size_{}; std::size_t capacity_{}; };
 }
-using namespace papertrail;
+
+

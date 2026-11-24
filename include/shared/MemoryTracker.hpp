@@ -1,4 +1,6 @@
 #pragma once
 #include <cstddef>
-namespace papertrail { class MemoryTracker { public: /** Returns global allocation count. */ static std::size_t allocationCount(); /** Returns global free count. */ static std::size_t freeCount(); /** Returns live allocation count. */ static std::size_t liveAllocations(); /** Emits or returns the final diagnostic report. */ static const char* finalReport(); /** Resets diagnostic counters when safe. */ static void reset(); }; }
-using namespace papertrail;
+#include <string>
+namespace papertrail { class MemoryTracker { public: static std::size_t allocationCount(); static std::size_t freeCount(); static std::size_t liveAllocations(); static std::string finalReport(); static void reset(); }; }
+
+

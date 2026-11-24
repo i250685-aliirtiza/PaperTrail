@@ -1,5 +1,18 @@
 #pragma once
+#include <string>
 #include "../shared/Types.hpp"
-namespace papertrail { class Workspace; class VersionControl; class CommandShell { public: /** Constructs a command processor over application services. */ CommandShell(Workspace&,VersionControl&); /** Processes interactive input until exit. */ StatusCode runInteractive(); /** Executes one command line and advances the logical tick when applicable. */ StatusCode executeLine(const char* line); /** Runs commands from a script path. */ StatusCode runScript(const char* path); /** Dispatches a parsed command. */ StatusCode dispatch(const char* command); /** Formats a breadcrumb to 40 columns. */ const char* formatBreadcrumb(const char* path) const; /** Reads a merge conflict choice through the caller-provided input layer. */ ConflictChoice readConflictChoice(const char* prompt); /** Formats a structured result for the terminal. */ const char* formatResult(StatusCode status) const; /** Returns current logical tick. */ Tick currentTick() const; /** Requests application exit. */ void requestExit(); private: Workspace* workspace_{}; VersionControl* versionControl_{}; Tick tick_{}; bool exiting_{}; };
+#include "../version/MergeEngine.hpp"
+namespace papertrail {
+class Workspace; class VersionControl; class ContentServices; class InvariantChecker; class Fuzzer;
+class CommandShell : public ConflictResolver {
+public:
+    CommandShell(Workspace&,VersionControl&,ContentServices&,InvariantChecker&,Fuzzer&);
+    ~CommandShell() override;
+    StatusCode runInteractive(); StatusCode executeLine(const char* line); StatusCode runScript(const char* path); StatusCode dispatch(const char* command);
+    std::string formatBreadcrumb(const std::string& path) const;
+    ConflictChoice resolve(const ConflictInfo& conflict) override;
+    std::string formatResult(StatusCode status) const;
+    Tick currentTick() const; void requestExit(); StatusCode resetForFuzz();
+private: Workspace* workspace_{}; VersionControl* versionControl_{}; ContentServices* content_{}; InvariantChecker* checker_{}; Fuzzer* fuzzer_{}; Tick tick_{}; bool exiting_{};
+};
 }
-using namespace papertrail;

@@ -1,6 +1,35 @@
 #pragma once
-#include "../shared/Types.hpp"
 #include "../shared/Results.hpp"
-namespace papertrail { class Document; class Workspace; class ContentServices; class ConflictResolver; class VersionControl { public: /** Constructs version service with workspace/content dependencies. */ VersionControl(Workspace* workspace=nullptr,ContentServices* content=nullptr); /** Releases per-document history references. */ ~VersionControl(); /** Appends a line and stages insertion. */ EditResult addLine(Document&,const char* author,const char* text); /** Inserts after a one-based position. */ EditResult insertLine(Document&,std::size_t position,const char* author,const char* text); /** Edits a one-based line. */ EditResult editLine(Document&,std::size_t position,const char* author,const char* text); /** Deletes a one-based line. */ EditResult deleteLine(Document&,std::size_t position,const char* author); /** Adds validated embed markup. */ EditResult embedLine(Document&,const char* author,const char* targetName); /** Saves staged operations as one commit. */ SaveResult save(Document&,Tick); /** Reverses staged operations newest-first. */ DiscardResult discard(Document&); /** Reports whether staging is nonempty. */ bool hasStagedChanges(const Document&) const; /** Returns first-parent history. */ LogResult getLog(const Document&) const; /** Reconstructs a valid historical commit. */ ViewResult viewCommit(const Document&,CommitID) const; /** Returns current HEAD. */ CommitID getHead(const Document&) const; /** Returns structured status. */ StatusResult getStatus(const Document&) const; /** Forks saved content and history into a new document. */ ForkResult forkDocument(Document&,Workspace&,const char* name); /** Finds a two-parent common ancestor. */ CommonAncestorResult findCommonAncestor(const Document&,const Document&) const; /** Merges incoming into target through resolver. */ MergeResult mergeDocuments(Document&,const Document&,ConflictResolver&); /** Initializes an empty root commit. */ StatusCode initializeHistory(Document&,Tick); /** Releases document history references. */ StatusCode releaseHistory(Document&); private: void* implementation_{}; };
+#include "../shared/HashMap.hpp"
+#include "CommitDAG.hpp"
+#include "StagingQueue.hpp"
+namespace papertrail {
+class Document; class Workspace; class ContentServices; class ConflictResolver;
+class VersionControl {
+public:
+    VersionControl(); ~VersionControl();
+    void bindServices(Workspace& workspace,ContentServices& content);
+    EditResult addLine(Document& document,const char* author,const char* text);
+    EditResult insertLine(Document& document,std::size_t position,const char* author,const char* text);
+    EditResult editLine(Document& document,std::size_t position,const char* author,const char* text);
+    EditResult deleteLine(Document& document,std::size_t position,const char* author);
+    EditResult embedLine(Document& document,const char* author,const char* targetName);
+    SaveResult save(Document& document,Tick tick);
+    DiscardResult discard(Document& document);
+    bool hasStagedChanges(const Document& document) const;
+    LogResult getLog(const Document& document) const;
+    ViewResult viewCommit(const Document& document,CommitID commit) const;
+    CommitID getHead(const Document& document) const;
+    StatusResult getStatus(const Document& document) const;
+    ForkResult forkDocument(Document& source,Workspace& workspace,const char* newName,Tick tick);
+    CommonAncestorResult findCommonAncestor(const Document& first,const Document& second) const;
+    MergeResult mergeDocuments(Document& target,const Document& incoming,ConflictResolver& resolver,Tick tick);
+    StatusCode initializeHistory(Document& document,Tick tick);
+    StatusCode releaseHistory(Document& document);
+    DiagnosticResult validateHistory() const;
+    StatusCode resetForFuzz();
+private:
+    struct VersionState { Commit* head{}; StagingQueue staging; };
+    HashMap<FileID,VersionState*> states_; CommitDAG dag_; LineID nextLineID_{1}; Workspace* workspace_{}; ContentServices* content_{};
+};
 }
-using namespace papertrail;
