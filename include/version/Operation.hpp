@@ -1,0 +1,5 @@
+#pragma once
+#include "../shared/Types.hpp"
+namespace papertrail { class Operation { public: /** Constructs an insert operation. */ static Operation insert(LineID id,LineID anchor,const char* text,const char* author); /** Constructs a delete operation. */ static Operation remove(LineID id,LineID previous,const char* text,const char* author); /** Constructs an edit operation. */ static Operation edit(LineID id,const char* oldText,const char* newText,const char* oldAuthor,const char* newAuthor); /** Returns operation kind. */ OperationType type() const; /** Returns affected LineID. */ LineID lineID() const; /** Returns inverse operation. */ Operation inverse() const; /** Returns anchor or previous ID. */ LineID relatedLineID() const; /** Returns recorded text values. */ const char* oldText() const; const char* newText() const; /** Returns recorded authors. */ const char* oldAuthor() const; const char* newAuthor() const; private: OperationType type_{}; LineID line_{},related_{}; const char* oldText_{}; const char* newText_{}; const char* oldAuthor_{}; const char* newAuthor_{}; };
+}
+using namespace papertrail;

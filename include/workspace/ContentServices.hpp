@@ -1,0 +1,6 @@
+#pragma once
+#include "../shared/Types.hpp"
+#include "../shared/Results.hpp"
+namespace papertrail { class ContentServices { public: /** Prepares saved index and graph changes without publication. */ StatusCode prepareSavedChanges(FileID file,const char* oldText,const char* newText); /** Publishes prepared saved structures atomically. */ StatusCode publishSavedChanges(FileID file); /** Cancels prepared changes. */ void cancelPreparedChanges(FileID file); /** Registers a new document. */ StatusCode onDocumentCreated(FileID file); /** Copies saved structures for a fork. */ StatusCode onDocumentForked(FileID source,FileID destination); /** Hides a binned document. */ StatusCode onDocumentBinned(FileID file); /** Restores a document to saved visibility. */ StatusCode onDocumentRestored(FileID file); /** Purges all structures for permanent deletion. */ StatusCode onDocumentPermanentlyDeleted(FileID file); /** Validates embeds before save or merge. */ StatusCode validateEmbedChanges(FileID file,const char* text) const; /** Checks blocklist warnings without rejecting edits. */ BlocklistResult checkBlockedLine(const char* text) const; /** Searches saved content. */ SearchResult search(const char* query,bool prefix) const; private: void* implementation_{}; };
+}
+using namespace papertrail;
