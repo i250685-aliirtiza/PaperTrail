@@ -7,7 +7,7 @@ namespace papertrail {
 class Document; class Workspace; class ContentServices; class ConflictResolver;
 class VersionControl {
 public:
-    VersionControl(); ~VersionControl();
+    VersionControl(); ~VersionControl(); VersionControl(const VersionControl&) = delete; VersionControl& operator=(const VersionControl&) = delete; VersionControl(VersionControl&&) = delete; VersionControl& operator=(VersionControl&&) = delete;
     void bindServices(Workspace& workspace,ContentServices& content);
     EditResult addLine(Document& document,const char* author,const char* text);
     EditResult insertLine(Document& document,std::size_t position,const char* author,const char* text);

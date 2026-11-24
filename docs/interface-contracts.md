@@ -68,3 +68,18 @@ Construct VersionControl first. Construct Workspace with its VersionControl refe
 Shared structures provide manually managed copy/move/destruction, indexed queue access, separate-chaining maps, stable sorting, bounded heaps, Bloom ownership, memory diagnostics, and deterministic invariant/fuzzer entry points. Workspace owns Documents and FolderTree nodes. OrderStatisticAVL owns line nodes and its LineID map. VersionControl owns staging and history. Search owns B+ postings, tokenization, blocklist, similarity, and experiments. LinkGraph and EmbedGraph are saved-text services owned behind ContentServices. CommandShell is the only terminal formatting and conflict-input layer and implements ConflictResolver.
 
 All declaration comments describe the caller, parameters, result, mutation and failure guarantee. Implementations must keep those contracts without adding alternate facades, STL containers, smart pointers, global clocks, or executable logic to these headers.
+
+
+## Final declaration-level safety corrections
+
+- Document metadata uses an owned std::string name, a caller-provided creation tick, and Workspace-controlled star/bin/name setters. Document owns only working AVL and metadata, not commit HEAD/staging.
+- FolderTree::findPath returns PathLookupResult with explicit EntryType, FileID or FolderID, plus canonical path. A FileID of zero must never be interpreted as a folder identifier.
+- Workspace and FolderTree support subtree FileID enumeration before recycling, and permanent deletion addresses bin entries by BinID rather than live paths. BinIDs are globally monotonic; restore attempts original folder before root, handling collision suffixes.
+- OrderStatisticAVL owns exactly one LineID-to-Node* hash map; map node pointers are borrowed from its AVL storage. Both root and map must swap atomically. Implicit shallow copying of the AVL is prohibited; cloneFrom performs the explicit deep copy.
+- HashMap supports swapWith in O(1), forbids implicit shallow copying, and does not delete externally owned raw pointer values. Its insert(bool) distinguishes new insert from replacement, and allocation failure must not discard existing entries.
+- BPlusTree, MinHeap, CommitDAG, VersionControl, Workspace, ContentServices, LinkGraph, EmbedGraph, Blocklist and InvertedIndex cannot be implicitly copied/moved when they own raw allocations or external object identities.
+- Blocklist privately owns its counting Bloom and exact set; Similarity receives const Workspace to enumerate LIVE working documents. Neither implementation must rely on hidden global data.
+- DynamicArray supports const indexed access. Template declarations remain intentionally undefined until their student owners implement the templates in header-visible definitions; a syntax-only check does not imply linking is possible.
+- Workspace::createForkDestination includes the creation tick and must NOT create a fresh root commit for the fork. VersionControl assigns the saved source HEAD after deep-copying saved text and incrementing its reference.
+- Document constructors and metadata setters, LinkGraph/EmbedGraph/Blocklist lifecycle, and MinHeap destruction are declaration-only. No algorithms or method definitions are supplied.
+- Earlier comments in interface-contracts.md about fully frozen signatures must be interpreted together with these corrected signatures.

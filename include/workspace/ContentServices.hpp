@@ -9,7 +9,7 @@ namespace papertrail {
 class Workspace; class PreparedContentUpdate;
 class ContentServices {
 public:
-    explicit ContentServices(Workspace& workspace); ~ContentServices();
+    explicit ContentServices(Workspace& workspace); ~ContentServices(); ContentServices(const ContentServices&) = delete; ContentServices& operator=(const ContentServices&) = delete; ContentServices(ContentServices&&) = delete; ContentServices& operator=(ContentServices&&) = delete;
     StatusCode prepareSavedChanges(FileID file,const OrderStatisticAVL& candidateSavedText,const RingQueue<Operation>& committedOperations,PreparedContentUpdate*& prepared);
     StatusCode prepareLifecycle(ContentLifecycleKind kind,const DynamicArray<FileID>& affectedDocuments,FileID forkSource,FileID forkDestination,PreparedContentUpdate*& prepared);
     void publishPrepared(PreparedContentUpdate*& prepared) noexcept;

@@ -15,6 +15,7 @@ template<class T> class DynamicArray { public:
 /** Returns an element by index, with invalid indexes rejected by the contract. */ T& get(std::size_t index);
 /** Returns a const element by index. */ const T& get(std::size_t index) const;
 /** Indexes an element without changing ownership. */ T& operator[](std::size_t index);
+/** Returns read-only indexed element; index must be within size(). */ const T& operator[](std::size_t index) const;
 /** Appends an element, doubling capacity when full. */ void pushBack(const T& value);
 /** Removes the last element and reports failure when empty. */ bool popBack(T& output);
 /** Ensures at least the requested capacity. */ void reserve(std::size_t requested);

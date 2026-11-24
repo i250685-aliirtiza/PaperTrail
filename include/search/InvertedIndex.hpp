@@ -1,7 +1,7 @@
 #pragma once
 #include "BPlusTree.hpp"
 namespace papertrail {
-class InvertedIndex { public:
+class InvertedIndex { public: InvertedIndex(); ~InvertedIndex(); InvertedIndex(const InvertedIndex&) = delete; InvertedIndex& operator=(const InvertedIndex&) = delete;
     StatusCode applyInsertLine(FileID,LineID,const char* text);
     StatusCode applyDeleteLine(FileID,LineID,const char* text);
     StatusCode applyEditLine(FileID,LineID,const char* oldText,const char* newText);

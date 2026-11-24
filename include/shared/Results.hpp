@@ -3,6 +3,8 @@
 #include "DynamicArray.hpp"
 namespace papertrail {
 struct ExplorerResult { StatusCode status{}; FileID file{}; };
+/** Resolves a path's entry type and its corresponding stable ID. Neither ID owns an object. */
+struct PathLookupResult { StatusCode status{}; EntryType type{}; FileID file{}; FolderID folder{}; std::string resolvedPath; };
 struct ExplorerEntry { EntryType type{}; FileID file{}; FolderID folder{}; std::string name; std::size_t lines{}; std::size_t size{}; Tick modified{}; bool starred{}; bool binned{}; };
 struct ExplorerListResult { StatusCode status{}; DynamicArray<ExplorerEntry> entries; };
 struct PropertiesResult { StatusCode status{}; FileID file{}; std::string name; std::size_t bytes{}; std::size_t lines{}; Tick created{}; Tick modified{}; bool starred{}; bool binned{}; };
