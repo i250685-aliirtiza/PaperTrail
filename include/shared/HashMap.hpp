@@ -1,0 +1,4 @@
+#pragma once
+#include <cstddef>
+namespace papertrail { template<class K,class V> class HashMap { public: /** Constructs a map with implementation-defined bucket count. */ explicit HashMap(std::size_t buckets=8); /** Releases owned entries. */ ~HashMap(); /** Inserts or replaces a key. */ bool insert(const K&,const V&); /** Finds a key and copies its value. */ bool find(const K&,V& output) const; /** Tests key membership. */ bool contains(const K&) const; /** Erases a key. */ bool erase(const K&); /** Returns entry count. */ std::size_t size() const; /** Reports emptiness. */ bool empty() const; /** Removes all entries. */ void clear(); /** Rehashes into the requested bucket count. */ void rehash(std::size_t buckets); /** Visits entries for diagnostics and cleanup. */ template<class Visitor> void forEach(Visitor visitor) const; private: struct Entry; Entry** buckets_{}; std::size_t bucketCount_{}; std::size_t size_{}; }; }
+using namespace papertrail;
